@@ -30,6 +30,7 @@ export const api = {
   orders: () => request('/orders'),
   createOrder: (items) => request('/orders', { method: 'POST', body: JSON.stringify({ items }) }),
   adminOrders: () => request('/admin/orders'),
+  adminMembers: () => request('/admin/members'),
   updateOrder: (id, status) => request(`/admin/orders/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
   saveBook: (book) => request('/admin/books', { method: 'POST', body: JSON.stringify(book) }),
   updateBook: (id, book) => request(`/admin/books/${id}`, { method: 'PATCH', body: JSON.stringify(book) }),
