@@ -85,6 +85,16 @@
 .admin-order-card-foot > div small { color: #8c9087; font-size: 12px; }
 .admin-order-card-foot > div strong { margin-top: 2px; color: #254c3e; font-size: 19px; }
 .admin-order-card-foot label { display: grid; gap: 5px; color: #848a7e; font-size: 12px; }
+.admin-member-table { min-width: 900px; }
+.member-name-cell { display: flex; align-items: center; gap: 10px; min-width: 160px; }
+.member-avatar { display: grid; place-items: center; width: 36px; height: 36px; flex: 0 0 36px; border-radius: 50%; background: #e6ece1; color: #4d6c58; font-size: 14px; font-weight: 600; }
+.member-name-cell strong, .member-name-cell small { display: block; }
+.member-name-cell strong { color: #344b3d; font-size: 14px; }
+.member-name-cell small { margin-top: 3px; color: #92948b; font-size: 12px; }
+.member-role-select { min-width: 135px; padding: 7px 9px; border: 1px solid #dfe1d7; background: #fffefa; color: #53644f; font: inherit; font-size: 13px; }
+.member-role-select:disabled { cursor: not-allowed; opacity: .7; }
+.member-self-note { display: block; margin-top: 4px; color: #92948b; font-size: 11px; }
+.member-orders-button { white-space: nowrap; }
 
 @media (max-width: 1000px) {
   .admin-overview { grid-template-columns: repeat(3, minmax(0, 1fr)); }

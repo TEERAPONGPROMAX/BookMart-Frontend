@@ -1,6 +1,7 @@
 import { AlertTriangle, BookOpen, Boxes, ClipboardList, Plus, RefreshCw, Search, TrendingUp } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../api/backend';
+import { useAuth } from '../auth/AuthContext';
 
 const blankBook = { title: '', author: '', category: '', price: '', stock: '', cover_url: '', description: '', featured: false };
 const statusLabels = { pending: 'รอดำเนินการ', paid: 'ชำระแล้ว', shipped: 'จัดส่งแล้ว', cancelled: 'ยกเลิก' };
@@ -8,6 +9,7 @@ const formatPrice = (value) => `฿${Number(value || 0).toLocaleString('th-TH', 
 const formatDate = (value) => new Intl.DateTimeFormat('th-TH', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
 
 export default function Admin() {
+  const { user } = useAuth();
   const [books, setBooks] = useState([]);
   const [orders, setOrders] = useState([]);
   const [members, setMembers] = useState([]);
@@ -18,9 +20,12 @@ export default function Admin() {
   const [notice, setNotice] = useState('');
   const [bookQuery, setBookQuery] = useState('');
   const [orderQuery, setOrderQuery] = useState('');
+  const [memberQuery, setMemberQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [memberRoleFilter, setMemberRoleFilter] = useState('all');
   const [saving, setSaving] = useState(false);
   const [changingOrderId, setChangingOrderId] = useState(null);
+  const [changingMemberId, setChangingMemberId] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -36,6 +41,17 @@ export default function Admin() {
   const lowStockBooks = books.filter((book) => Number(book.stock) <= 5);
   const pendingOrders = orders.filter((order) => order.status === 'pending');
   const memberById = useMemo(() => new Map(members.map((member) => [String(member.id), member])), [members]);
+  const memberOrderStats = useMemo(() => {
+    const stats = new Map();
+    orders.forEach((order) => {
+      const key = String(order.user_id);
+      const current = stats.get(key) || { count: 0, total: 0 };
+      current.count += 1;
+      current.total += Number(order.total || 0);
+      stats.set(key, current);
+    });
+    return stats;
+  }, [orders]);
   const visibleBooks = useMemo(() => books.filter((book) =>
     `${book.title} ${book.author} ${book.category}`.toLowerCase().includes(bookQuery.trim().toLowerCase())), [books, bookQuery]);
   const visibleOrders = useMemo(() => orders.filter((order) => {
@@ -44,6 +60,17 @@ export default function Admin() {
     const searchText = `${order.id} ${order.user_id} ${member?.name || ''} ${member?.email || ''} ${(order.items || []).map((item) => item.title).join(' ')}`.toLowerCase();
     return matchesStatus && searchText.includes(orderQuery.trim().toLowerCase());
   }), [orders, orderQuery, statusFilter, memberById]);
+  const visibleMembers = useMemo(() => members.filter((member) => {
+    const matchesRole = memberRoleFilter === 'all' || member.role === memberRoleFilter;
+    const matchesQuery = `${member.id} ${member.name} ${member.email}`.toLowerCase().includes(memberQuery.trim().toLowerCase());
+    return matchesRole && matchesQuery;
+  }).sort((a, b) => Number(b.id) - Number(a.id)), [members, memberQuery, memberRoleFilter]);
+
+  function showMemberOrders(member) {
+    setOrderQuery(String(member.id));
+    setStatusFilter('all');
+    document.getElementById('admin-orders-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 
   async function refreshBooks() { setBooks(await api.books()); }
 
@@ -87,6 +114,25 @@ export default function Admin() {
     finally { setChangingOrderId(null); }
   }
 
+  async function changeMemberRole(member, role) {
+    if (member.role === role) return;
+    if (Number(member.id) === Number(user?.id) && role !== 'admin') {
+      setError('ไม่สามารถลดสิทธิ์บัญชีที่กำลังใช้งานอยู่ได้');
+      return;
+    }
+    const roleName = role === 'admin' ? 'ผู้ดูแลระบบ' : 'สมาชิก';
+    if (!window.confirm(`ยืนยันเปลี่ยนสิทธิ์ ${member.name} เป็น “${roleName}” หรือไม่?`)) return;
+    setError('');
+    setNotice('');
+    setChangingMemberId(member.id);
+    try {
+      const updated = await api.updateMemberRole(member.id, role);
+      setMembers((current) => current.map((item) => item.id === member.id ? { ...item, ...updated } : item));
+      setNotice(role === 'admin' ? `เปลี่ยนสิทธิ์ ${member.name} แล้ว ให้สมาชิกออกจากระบบและเข้าใหม่` : `ลดสิทธิ์ ${member.name} เป็นสมาชิกแล้ว`);
+    } catch (problem) { setError(problem.message); }
+    finally { setChangingMemberId(null); }
+  }
+
   return <main className="page-wrap admin-page">
     <section className="dashboard-panel admin-panel">
       <div className="admin-page-heading"><div><div className="modal-kicker">BOOKMART ADMIN · ภาพรวมร้าน</div><h1>จัดการร้าน</h1><p>ดูแลหนังสือ สต็อก และติดตามคำสั่งซื้อจากหน้านี้</p></div><button className="secondary-button admin-refresh" onClick={() => setRetryCount((count) => count + 1)} disabled={loading}><RefreshCw size={15}/> โหลดข้อมูลใหม่</button></div>
@@ -126,7 +172,7 @@ export default function Admin() {
         <p className="admin-list-count">แสดง {loading ? '—' : visibleBooks.length} จาก {loading ? '—' : books.length} รายการ</p>
       </section>
 
-      <section className="admin-section admin-orders-section" aria-labelledby="admin-orders-title">
+      <section className="admin-section admin-orders-section" aria-labelledby="admin-orders-title" id="admin-orders">
         <div className="admin-section-heading"><div><span className="section-index">02</span><div><h2 id="admin-orders-title">คำสั่งซื้อ</h2><p>ตรวจรายการสินค้า ยอดรวม และปรับสถานะจัดส่ง</p></div></div><span className="orders-count">{loading ? 'กำลังโหลด' : `${visibleOrders.length} รายการ`}</span></div>
         <div className="admin-order-filters"><label className="admin-search"><Search size={16}/><input value={orderQuery} onChange={(event) => setOrderQuery(event.target.value)} placeholder="ค้นหาเลขคำสั่งซื้อ สมาชิก หรือชื่อหนังสือ" aria-label="ค้นหาคำสั่งซื้อ"/></label><label className="status-filter">กรองสถานะ<select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option value="all">ทุกสถานะ</option><option value="pending">รอดำเนินการ</option><option value="paid">ชำระแล้ว</option><option value="shipped">จัดส่งแล้ว</option><option value="cancelled">ยกเลิก</option></select></label></div>
         {visibleOrders.map((order) => <article className="admin-order-card" key={order.id}>
@@ -136,6 +182,18 @@ export default function Admin() {
           <footer className="admin-order-card-foot"><div><small>ยอดรวมคำสั่งซื้อ</small><strong>{formatPrice(order.total)}</strong></div><label>เปลี่ยนสถานะ<select aria-label={`สถานะคำสั่งซื้อ ${order.id}`} value={order.status} disabled={changingOrderId === order.id} onChange={(event) => changeStatus(order, event.target.value)}><option value="pending">รอดำเนินการ</option><option value="paid">ชำระแล้ว</option><option value="shipped">จัดส่งแล้ว</option><option value="cancelled">ยกเลิก</option></select></label></footer>
         </article>)}
         {!loading && visibleOrders.length === 0 && <div className="admin-empty">{orders.length ? 'ไม่พบคำสั่งซื้อที่ตรงกับตัวกรอง' : 'ยังไม่มีคำสั่งซื้อจากสมาชิก'}</div>}
+      </section>
+
+      <section className="admin-section" aria-labelledby="admin-members-title">
+        <div className="admin-section-heading"><div><span className="section-index">03</span><div><h2 id="admin-members-title">สมาชิก</h2><p>ค้นหาบัญชี ดูบทบาท และตรวจยอดคำสั่งซื้อของสมาชิก</p></div></div><span className="orders-count">{loading ? 'กำลังโหลด' : `${visibleMembers.length} จาก ${members.length} คน`}</span></div>
+        <div className="admin-order-filters"><label className="admin-search"><Search size={16}/><input value={memberQuery} onChange={(event) => setMemberQuery(event.target.value)} placeholder="ค้นหาชื่อ อีเมล หรือรหัสสมาชิก" aria-label="ค้นหาสมาชิก"/></label><label className="status-filter">บทบาท<select value={memberRoleFilter} onChange={(event) => setMemberRoleFilter(event.target.value)}><option value="all">ทุกบทบาท</option><option value="member">สมาชิก</option><option value="admin">ผู้ดูแลระบบ</option></select></label></div>
+        <div className="admin-book-table-wrap"><table className="admin-book-table admin-member-table"><thead><tr><th>สมาชิก</th><th>อีเมล</th><th>บทบาท / เปลี่ยนสิทธิ์</th><th>คำสั่งซื้อ</th><th>ยอดซื้อรวม</th><th>รายละเอียด</th></tr></thead><tbody>
+          {!loading && visibleMembers.map((member) => {
+            const stats = memberOrderStats.get(String(member.id)) || { count: 0, total: 0 };
+            return <tr key={member.id}><td><div className="member-name-cell"><span className="member-avatar">{(member.name || '?').slice(0, 1).toUpperCase()}</span><div><strong>{member.name}</strong><small>รหัสสมาชิก #{member.id}</small></div></div></td><td>{member.email}</td><td><select className="member-role-select" aria-label={`เปลี่ยนบทบาท ${member.name}`} value={member.role} disabled={changingMemberId === member.id || Number(member.id) === Number(user?.id)} onChange={(event) => changeMemberRole(member, event.target.value)}><option value="member">สมาชิก</option><option value="admin">ผู้ดูแลระบบ</option></select>{Number(member.id) === Number(user?.id) && <small className="member-self-note">บัญชีที่ใช้อยู่</small>}</td><td>{stats.count} รายการ</td><td>{formatPrice(stats.total)}</td><td><button className="secondary-button member-orders-button" onClick={() => showMemberOrders(member)}>ดูคำสั่งซื้อ</button></td></tr>;
+          })}
+        </tbody></table></div>
+        {!loading && visibleMembers.length === 0 && <div className="admin-empty">{members.length ? 'ไม่พบสมาชิกที่ตรงกับคำค้นหาหรือตัวกรอง' : 'ยังไม่มีบัญชีสมาชิก'}</div>}
       </section>
     </section>
   </main>;
