@@ -1,0 +1,66 @@
+:root {
+  font-size: 16px;
+}
+
+body {
+  line-height: 1.65;
+}
+
+.announcement { font-size: 12px; }
+.brand small { font-size: 11px; }
+.nav a, .icon-btn span { font-size: 14px; }
+.cart-button { font-size: 13px; }
+.cart-button b { font-size: 11px; }
+.eyebrow { font-size: 12px; }
+.hero-copy > p { font-size: 15px; }
+.hero-note { font-size: 12px; }
+.primary-button, .secondary-button, .delete-button, .logout-button { font-size: 13px; }
+.hero-bottom { font-size: 10px; }
+.benefits b { font-size: 13px; }
+.benefits small { font-size: 12px; }
+.section-heading > p { font-size: 14px; }
+.pill { font-size: 12px; }
+.search-box input { font-size: 14px; }
+.cover-quick { font-size: 12px; }
+.book-category, .rating { font-size: 11px; }
+.book-card h3 { font-size: 14px; }
+.book-author { font-size: 12px; }
+.book-buy b { font-size: 14px; }
+.catalog-foot { font-size: 11px; }
+.api-indicator { font-size: 11px; }
+.status-line { font-size: 14px; }
+.empty-state h3 { font-size: 20px; }
+.empty-state p { font-size: 13px; }
+.footer > span { font-size: 10px; }
+.modal-kicker { font-size: 11px; }
+.form-intro, .account-card > p, .dashboard-panel > p { font-size: 13px; }
+.auth-form label, .admin-edit-form label { font-size: 13px; }
+.auth-form input, .admin-edit-form input, .admin-edit-form textarea { font-size: 14px; }
+.switch-auth { font-size: 13px; }
+.form-error, .success-message { font-size: 13px; }
+.role-chip { font-size: 11px; }
+.admin-stats small { font-size: 12px; }
+.admin-book-list > div > span { font-size: 13px; }
+.admin-book-list small { font-size: 12px; }
+.admin-book-list button { font-size: 12px; }
+.admin-order { font-size: 13px; }
+.admin-order select { font-size: 13px; }
+.catalog-error { font-size: 13px; }
+.sold-out { font-size: 12px; }
+.line-info b { font-size: 15px; }
+.line-info small { font-size: 12px; }
+.line-info strong { font-size: 14px; }
+.quantity span { font-size: 13px; }
+.cart-summary > div { font-size: 15px; }
+.cart-summary > small { font-size: 12px; }
+.order-head, .order-total { font-size: 12px; }
+.order-card p { font-size: 13px; }
+.toast { font-size: 13px; }
+
+@media (max-width: 650px) {
+  .announcement { font-size: 11px; }
+  .hero-copy > p { font-size: 14px; }
+  .benefits b { font-size: 12px; }
+  .benefits small { font-size: 11px; }
+  .api-indicator { font-size: 10px; }
+}
