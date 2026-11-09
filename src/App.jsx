@@ -4,6 +4,7 @@ import { api } from './api/backend';
 import { useAuth } from './auth/AuthContext';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
+import RequireRole from './components/RequireRole';
 import Toast from './components/Toast';
 import Admin from './pages/Admin';
 import Home from './pages/Home';
@@ -59,7 +60,7 @@ export default function App() {
       <Route path="/login" element={user ? <Navigate to="/" replace/> : <Login/>}/>
       <Route path="/register" element={user ? <Navigate to="/" replace/> : <Register/>}/>
       <Route element={<ProtectedRoute/>}><Route path="/profile" element={<Profile/>}/><Route path="/orders" element={<Orders/>}/></Route>
-      <Route element={<ProtectedRoute role="admin"/>}><Route path="/admin" element={<Admin/>}/></Route>
+      <Route element={<ProtectedRoute/>}><Route element={<RequireRole role="admin"/>}><Route path="/admin" element={<Admin/>}/></Route></Route>
       <Route path="/403" element={<Forbidden/>}/><Route path="*" element={<NotFound/>}/>
     </Routes>
     <Toast notice={notice} onDismiss={dismissNotice}/>
