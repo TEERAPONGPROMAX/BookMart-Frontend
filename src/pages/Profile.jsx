@@ -17,3 +17,5 @@ export default function Profile() {
     const formElement = event.currentTarget;
     try { const form = new FormData(formElement); await api.changePassword(form.get('password')); formElement.reset(); setNotice('เปลี่ยนรหัสผ่านแล้ว'); }
     catch (problem) { setError(problem.message); }
+  }
+}
